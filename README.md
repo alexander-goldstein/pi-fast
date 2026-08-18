@@ -19,6 +19,14 @@ Single-binary agents (claude.exe 324MB, kimi.exe 150MB, codex's 11-file npm wrap
 
 Requirements: Windows, Node.js LTS with npm on PATH. (pi itself is installed automatically if missing.)
 
+One-liner (download + run):
+
+```powershell
+iwr https://raw.githubusercontent.com/keros68/pi-fast/main/pi-fast.ps1 -OutFile $env:TEMP\pi-fast.ps1; powershell -ExecutionPolicy Bypass -File $env:TEMP\pi-fast.ps1
+```
+
+Or clone/download this repo and run the script directly:
+
 ```powershell
 powershell -ExecutionPolicy Bypass -File pi-fast.ps1
 ```

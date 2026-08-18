@@ -19,6 +19,14 @@ pi 以 npm 形态发布,是 tsc 直出的散装代码:**13,000+ 个小 JS 文件
 
 要求:Windows + Node.js LTS(npm 在 PATH)。pi 本体缺失时会自动安装。
 
+一键安装(下载并运行):
+
+```powershell
+iwr https://raw.githubusercontent.com/keros68/pi-fast/main/pi-fast.ps1 -OutFile $env:TEMP\pi-fast.ps1; powershell -ExecutionPolicy Bypass -File $env:TEMP\pi-fast.ps1
+```
+
+或克隆/下载本仓库后直接运行脚本:
+
 ```powershell
 powershell -ExecutionPolicy Bypass -File pi-fast.ps1
 ```
