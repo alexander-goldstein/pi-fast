@@ -1,0 +1,4 @@
+# local artifacts from running the script in-tree
+pi-single.mjs
+pi-single.version
+node_modules/
