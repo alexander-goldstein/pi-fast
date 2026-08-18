@@ -1,10 +1,12 @@
 # pi-fast
 
-**让 [pi coding agent](https://github.com/earendil-works/pi) 在 Windows 上启动快约 4 倍**——把 npm 安装的 CLI 重打包为单文件。
+**让 [pi coding agent](https://github.com/earendil-works/pi) 在 Windows 上启动快约 4 倍。**
+
+> **重要更新:** pi 官方每个 release 都已在 [GitHub Releases](https://github.com/earendil-works/pi/releases) 发布单文件二进制(`pi-windows-x64.zip` 等,bun compile),实测启动 0.63s——**首选方案是直接用官方二进制**(下载解压即用,不需要 Node/npm)。问题在于官方文档只提 `npm install -g`(curl 安装器内部也走 npm),Windows 用户默认踩 13k 文件慢路径。本仓库的 `pi-fast.ps1` 适用于必须走 npm 安装的场景,也是得出上述结论的实测依据。
 
 ```
-pi --version        之前: 3.2s   之后: 0.8s
-pi -p (完整一轮)    之前: 5.0s   之后: 2.4s   (剩余为模型 API 延迟)
+pi --version        npm 原版: 3.2s   本仓库 bundle: 0.8s   官方二进制: 0.63s
+pi -p (完整一轮)    npm 原版: 5.0s   本仓库 bundle: 2.4s   官方二进制: 2.5s
 ```
 
 Windows 11 + Defender 实时扫描开启下单机实测,pi 0.84.2。方法学见 [docs/benchmark-notes.md](docs/benchmark-notes.md)(英文)。
@@ -15,7 +17,11 @@ pi 以 npm 形态发布,是 tsc 直出的散装代码:**13,000+ 个小 JS 文件
 
 单文件二进制的 agent(claude.exe 324MB、kimi.exe 150MB、codex 用 11 个文件的 npm 包装 Rust 二进制)在结构上就没有这个问题。
 
-## 安装
+## 首选:官方二进制
+
+从 [GitHub Releases](https://github.com/earendil-works/pi/releases/latest) 下载对应架构的 `pi-windows-*.zip`(用 `SHA256SUMS` 验证),解压到固定目录,再做一个指向 `pi.exe` 的 `pi.cmd` 启动器即可。升级 = 下载新版 zip。完全不需要 Node/npm。
+
+## 安装(npm 路径)
 
 要求:Windows + Node.js LTS(npm 在 PATH)。pi 本体缺失时会自动安装。
 
@@ -56,7 +62,7 @@ powershell -ExecutionPolicy Bypass -File pi-fast.ps1
 | 微软 Dev Drive(ReFS + Defender 异步扫描) | 官方对 node_modules 慢的回应,但要单独一块卷,且只治扫描、不治 13k 文件打开 |
 | 给 node 目录加 Defender 排除 | 有安全代价;仍是 13k 文件打开 |
 | Node 22+ 的 `NODE_COMPILE_CACHE` | 实测对 pi 无效——瓶颈是文件 I/O,不是 V8 编译 |
-| 厂商官方单文件构建 | 真正的解法;在 pi 官方出单文件构建前,本项目是过渡方案,见 [docs/upstream-issue-draft.md](docs/upstream-issue-draft.md) |
+| 厂商官方单文件构建 | **已经存在**:每个 release 都在 GitHub Releases 发布六平台二进制(bun compile),实测 0.63s。只是文档只提 npm 安装,Windows 用户默认踩坑。建议官方在文档中引导 Windows 用户使用二进制,见 [docs/upstream-issue-draft.md](docs/upstream-issue-draft.md) |
 
 ## 许可
 

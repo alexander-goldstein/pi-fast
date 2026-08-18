@@ -19,6 +19,7 @@ Timing: bash `time`, best of 3 after one warmup run unless noted
 | stock `pi --version` (13,181 files) | 3.2s | **~0.2s** |
 | stock `pi --version`, fresh copy of node_modules (Defender cold) | 32–46s | ~0.2s |
 | bundled `pi --version` (pi-fast) | **0.8s** | ~0.06s |
+| **official release binary `pi.exe` (bun compile, 108MB)** | **0.63s** | ~0.05s |
 
 Key evidence for the I/O-bound diagnosis: 3.2s wall but 0.2s CPU on the stock
 install. CPU is idle ~94% of startup — the process is waiting on file opens.
@@ -42,12 +43,18 @@ pi performs this check at interactive startup (plus package update checks).
 | stock pi, PI_OFFLINE unset | 5.0–11.9s (varies with link quality) |
 | stock pi, PI_OFFLINE=1 | 4.9s |
 | pi-fast bundle | **2.4s** |
+| official release binary | 2.5s |
 
 ## What pi-fast changes
 
 - 13,181 files → 1 bundle file (11.7MB) + ~11 external packages on disk
   (native `.node` modules and extension-resolved deps cannot be bundled)
 - startup network calls disabled by default (`PI_OFFLINE=1`, overridable)
+
+Note: pi's own releases ship a bun-compiled single-file binary with the same
+external-packages architecture (`native/`, `node_modules/`, `theme/` next to
+`pi.exe`) — measured 0.63s. It is the recommended solution for Windows users;
+the docs just don't mention it.
 
 ## What it does NOT change
 

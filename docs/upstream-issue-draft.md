@@ -1,32 +1,42 @@
-标题建议:Windows: startup is I/O-bound on 13k unbundled dist files; ship (or document) a single-file build
+# Upstream issue draft
 
-## 背景
+> 发到 https://github.com/earendil-works/pi/issues (用官方 issue 模板,保持简短具体;新贡献者的 issue 默认自动关闭,达标才会被重开,数据齐全是关键)。
+>
+> 标题建议:
+> **Windows: docs/installer steer users to the slow npm path; the release binary is 5x faster — please recommend it for Windows**
 
-Windows 11 上 pi 冷启动明显慢于 Claude Code / Codex / Kimi Code 等同为 CLI 的 agent。
-在同一台机器实测:codex --version 0.47s,pi --version 3.2s(裸 node 0.12s)。
-相关 issue:#6075(startup too slow)、#6794(model catalog refresh)、PR #7637(startup benchmark)。
+---
 
-## 归因(实测数据)
+## What happened
 
-- `pi --version` 墙钟 3.2s,但 user+sys CPU 仅 ~0.2s → 纯 I/O 等待,不是计算
-- pi 的 npm 包是 tsc 直出的散装 JS(dist/ + node_modules 共 13,181 个文件),
-  Node 逐文件 open/read/parse,每次 open 都经过 Windows Defender 实时扫描钩子
-- 对照:claude.exe / kimi.exe 是单文件原生二进制(324MB/150MB),codex 的 npm
-  包只有 11 个文件(7KB launcher + Rust 二进制),它们天然免疫此问题
-- 额外叠加:启动期版本检查网络往返(慢网环境 +2.6s,PI_OFFLINE 可关)
+On Windows 11 (Defender real-time scanning on, no exclusions), stock npm-installed pi starts in **3.2s wall / 0.2s CPU** — almost pure file-I/O wait: the npm package is unbundled tsc output (13k+ files), and every file open goes through the Defender scan hook. Startup network checks (version + package update, 2.6s RTT on slow links) add on top.
 
-## 验证
+For comparison on the same machine: codex 0.47s, the release binary `pi-windows-x64.zip` **0.63s**, an esbuild rebundle of `dist/cli.js` 0.8s.
 
-用 esbuild 把 dist/cli.js 打成单个 12MB ESM 文件(原生 .node 模块外置):
+## The gap
 
-- `--version`:3.2s → **0.8s**(4 倍)
-- `-p` 全流程:5.0s → 2.4s
-- 功能完整:TUI、主题(PI_PACKAGE_DIR 指回原安装读运行时 JSON)、扩展、skills 均正常
+The single-file binary (`build:binary`, bun compile) already exists and ships for every release — thank you! But neither the README install section nor `pi.dev/install.sh` mentions it; both point Windows users at `npm install -g` / the npm-based curl installer, which is the slowest path on this platform.
 
-## 建议
+## Suggestion
 
-1. 官方发布单文件构建(esbuild bundle 或 bun build --compile),Windows 用户受益最大
-2. 或至少在文档的 Windows 一节给出本方案的等价做法与注意事项
+One of:
 
-(附:民间可用的打包脚本思路——bundle + 外置 pi-tui/clipboard 原生模块 +
-PI_PACKAGE_DIR 指回原安装解析主题与版本号。)
+1. Add a note to the README/quickstart: *"On Windows, prefer the release binary from GitHub Releases"* (fastest, no Node needed), or
+2. Make `install.sh` / a future `install.ps1` prefer the release binary on Windows, or
+3. If npm must stay the default, consider a postinstall hint printing the binary alternative.
+
+## Measurements (one machine, pi 0.84.2, best of 3)
+
+| Variant | `--version` | full `-p` turn |
+|---|---|---|
+| npm stock | 3.2s | 5.0s |
+| esbuild rebundle of `dist/cli.js` | 0.8s | 2.4s |
+| **release binary `pi.exe`** | **0.63s** | 2.5s |
+
+Fresh-copy cold start of the npm tree: 32–46s (Defender per-file scan tax). `NODE_COMPILE_CACHE=1`: no improvement (bottleneck is file opens, not V8 compile).
+
+Full methodology: https://github.com/keros68/pi-fast/blob/main/docs/benchmark-notes.md
+
+## Why an issue, not a PR
+
+There is no code gap — `build:binary` and the release assets already exist. This is purely a docs/install-routing suggestion, so it belongs here for maintainer judgement.

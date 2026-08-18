@@ -1,10 +1,14 @@
 # pi-fast
 
-**Make the [pi coding agent](https://github.com/earendil-works/pi) start ~4x faster on Windows** by rebundling the npm-installed CLI into a single file.
+**Make the [pi coding agent](https://github.com/earendil-works/pi) start ~4x faster on Windows.**
+
+> **Update (important):** pi's maintainers already build a single-file binary for every release (`pi-windows-x64.zip` etc. in [GitHub Releases](https://github.com/earendil-works/pi/releases)) — it starts just as fast (0.63s measured) and is the recommended solution. The catch: the docs only mention `npm install -g` and the curl installer (which also uses npm), so Windows users get the slow 13k-file path by default. See [Recommended: official binary](#recommended-official-binary).
+>
+> `pi-fast.ps1` (this repo's script) remains useful if you must install via npm (e.g. managed environments), and as the measured case study that led to the recommendation above.
 
 ```
-pi --version        before: 3.2s   after: 0.8s
-pi -p (full turn)   before: 5.0s   after: 2.4s   (rest is model API latency)
+pi --version        npm stock: 3.2s   pi-fast bundle: 0.8s   official binary: 0.63s
+pi -p (full turn)   npm stock: 5.0s   pi-fast bundle: 2.4s   official binary: 2.5s
 ```
 
 Measured on Windows 11 with Defender real-time scanning on, one machine, pi 0.84.2. See [docs/benchmark-notes.md](docs/benchmark-notes.md) for methodology.
@@ -15,7 +19,21 @@ pi ships on npm as unbundled tsc output: **13,000+ small JS files**. Node opens,
 
 Single-binary agents (claude.exe 324MB, kimi.exe 150MB, codex's 11-file npm wrapper around a Rust binary) don't have this problem structurally.
 
-## Install
+## Recommended: official binary
+
+Every pi release ships a bun-compiled single-file binary: grab
+[`pi-windows-x64.zip`](https://github.com/earendil-works/pi/releases/latest) (or your arch), unzip anywhere stable, verify against `SHA256SUMS`, and point a `pi.cmd` shim at it:
+
+```bat
+@echo off
+if not defined PI_OFFLINE set PI_OFFLINE=1
+"C:\path\to\pi\pi.exe" %*
+```
+
+(`PI_OFFLINE=1` skips startup version/package checks; unset it to check for updates.)
+Updates = download the next release zip. No Node.js/npm required at all.
+
+## Install (npm path)
 
 Requirements: Windows, Node.js LTS with npm on PATH. (pi itself is installed automatically if missing.)
 
